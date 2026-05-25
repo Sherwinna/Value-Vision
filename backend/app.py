@@ -1,11 +1,17 @@
 import yfinance as yf
 import sqlite3
 import json
-from flask import Flask, jsonify
+from datetime import datetime, timedelta, timezone
+from functools import wraps
+from flask import Flask, jsonify, request
 from flask_cors import CORS
 from apscheduler.schedulers.background import BackgroundScheduler
+import jwt
+from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
+app.config["SECRET_KEY"] = "value-vision-secret-key-change-in-production"
+app.config["JWT_EXPIRATION_HOURS"] = 72
 CORS(app)
 
 # Full S&P 500 list
@@ -27,8 +33,46 @@ def init_db():
     c = conn.cursor()
     c.execute('''CREATE TABLE IF NOT EXISTS stocks
                  (symbol TEXT PRIMARY KEY, data TEXT)''')
+    c.execute('''CREATE TABLE IF NOT EXISTS users (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        username TEXT UNIQUE NOT NULL,
+        password_hash TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )''')
     conn.commit()
     conn.close()
+
+def hash_password(password):
+    return generate_password_hash(password)
+
+def check_password(password, hash):
+    return check_password_hash(hash, password)
+
+def create_token(user_id):
+    payload = {
+        "user_id": user_id,
+        "exp": datetime.now(timezone.utc) + timedelta(hours=app.config["JWT_EXPIRATION_HOURS"]),
+    }
+    return jwt.encode(payload, app.config["SECRET_KEY"], algorithm="HS256")
+
+def verify_token(token):
+    try:
+        payload = jwt.decode(token, app.config["SECRET_KEY"], algorithms=["HS256"])
+        return payload["user_id"]
+    except:
+        return None
+
+def require_auth(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        auth = request.headers.get("Authorization", "")
+        if not auth.startswith("Bearer "):
+            return jsonify({"error": "Missing or invalid token"}), 401
+        user_id = verify_token(auth.split(" ", 1)[1])
+        if user_id is None:
+            return jsonify({"error": "Invalid or expired token"}), 401
+        return f(user_id=user_id, *args, **kwargs)
+    return decorated
 
 def get_stock_data(symbol):
     try:
@@ -82,6 +126,62 @@ def fetch_and_cache_all():
             print(f"Cached {symbol}")
     conn.close()
     print("Done fetching all stocks!")
+
+@app.route('/api/register', methods=['POST'])
+def register():
+    data = request.get_json()
+    if not data:
+        return jsonify({"error": "Request body required"}), 400
+    username = data.get("username", "").strip()
+    password = data.get("password", "")
+    if not username or not password:
+        return jsonify({"error": "Username and password required"}), 400
+    if len(password) < 6:
+        return jsonify({"error": "Password must be at least 6 characters"}), 400
+    conn = sqlite3.connect("stocks.db")
+    c = conn.cursor()
+    try:
+        pw_hash = hash_password(password)
+        c.execute("INSERT INTO users (username, password_hash) VALUES (?, ?)",
+                  (username, pw_hash))
+        conn.commit()
+        user_id = c.lastrowid
+        token = create_token(user_id)
+        return jsonify({"token": token, "user": {"id": user_id, "username": username}}), 201
+    except sqlite3.IntegrityError:
+        return jsonify({"error": "Username already taken"}), 409
+    finally:
+        conn.close()
+
+@app.route('/api/login', methods=['POST'])
+def login():
+    data = request.get_json()
+    if not data:
+        return jsonify({"error": "Request body required"}), 400
+    username = data.get("username", "").strip()
+    password = data.get("password", "")
+    conn = sqlite3.connect("stocks.db")
+    c = conn.cursor()
+    c.execute("SELECT id, username, password_hash FROM users WHERE username = ?",
+              (username,))
+    row = c.fetchone()
+    conn.close()
+    if not row or not check_password(password, row[2]):
+        return jsonify({"error": "Invalid username or password"}), 401
+    token = create_token(row[0])
+    return jsonify({"token": token, "user": {"id": row[0], "username": row[1]}})
+
+@app.route('/api/me')
+@require_auth
+def get_current_user(user_id):
+    conn = sqlite3.connect("stocks.db")
+    c = conn.cursor()
+    c.execute("SELECT id, username, created_at FROM users WHERE id = ?", (user_id,))
+    row = c.fetchone()
+    conn.close()
+    if not row:
+        return jsonify({"error": "User not found"}), 404
+    return jsonify({"user": {"id": row[0], "username": row[1], "created_at": row[2]}})
 
 @app.route('/api/stocks')
 def get_ranked_stocks():
