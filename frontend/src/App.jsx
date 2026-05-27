@@ -33,6 +33,8 @@ function StockTable() {
             <th>P/E</th>
             <th>P/B</th>
             <th>ROE</th>
+            <th>Div Yield</th>
+            <th>Debt/Equity</th>
             <th>Score</th>
           </tr>
         </thead>
@@ -42,9 +44,11 @@ function StockTable() {
               <td>{index + 1}</td>
               <td>{stock.symbol}</td>
               <td>{stock.name}</td>
-              <td>{stock.PE_ratio}</td>
-              <td>{stock.PB_ratio}</td>
-              <td>{stock.ROE}</td>
+              <td>{stock.PE_ratio ?? "N/A"}</td>
+              <td>{stock.PB_ratio ?? "N/A"}</td>
+              <td>{stock.ROE ?? "N/A"}</td>
+              <td>{stock.dividend_yield ?? "N/A"}</td>
+              <td>{stock.debt_to_equity ?? "N/A"}</td>
               <td>{stock.score}</td>
             </tr>
           ))}
