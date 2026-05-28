@@ -8,6 +8,8 @@ export default function Navbar() {
     <nav className="navbar">
       <Link to="/" className="nav-brand">Value Vision</Link>
       <div className="nav-links">
+        <Link to="/watchlist" className="nav-link">Watchlist</Link>
+        <input className="nav-search" type="text" placeholder="Search ticker..." />
         {user ? (
           <>
             <span className="nav-user">{user.username}</span>
