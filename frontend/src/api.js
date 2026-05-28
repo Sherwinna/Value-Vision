@@ -1,4 +1,4 @@
-const API = "http://127.0.0.1:5000"
+const API =  "https://value-vision-backend.onrender.com"
 
 export async function fetchWithAuth(url, options = {}) {
   const token = localStorage.getItem("token")
