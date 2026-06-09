@@ -5,6 +5,7 @@ import Navbar from "./components/Navbar"
 import LoginPage from "./pages/LoginPage"
 import RegisterPage from "./pages/RegisterPage"
 import WatchlistPage from "./pages/WatchlistPage"
+import LearnPage from "./pages/LearnPage"
 
 function StockTable() {
   const [stocks, setStocks] = useState([])
@@ -66,6 +67,7 @@ function App() {
         <Navbar />
         <Routes>
           <Route path="/" element={<StockTable />} />
+          <Route path="/learn" element={<LearnPage />} />
           <Route path="/watchlist" element={<WatchlistPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
