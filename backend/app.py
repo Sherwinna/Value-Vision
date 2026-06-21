@@ -123,6 +123,26 @@ def score_stock(stock):
 
     return round(score, 2)
 
+def check_value_trap(stock):
+    flags = []
+    
+    if stock["debt_to_equity"] and stock["debt_to_equity"] > 200:
+        flags.append("Extremely high debt")
+    
+    if stock["ROE"] and stock["ROE"] < 0:
+        flags.append("Negative return on equity")
+    
+    if stock["PB_ratio"] and stock["PB_ratio"] < 0:
+        flags.append("Negative book value")
+    
+    if stock["PE_ratio"] is None and stock["dividend_yield"] and stock["dividend_yield"] > 0.08:
+        flags.append("High dividend but no earnings")
+
+    if stock["debt_to_equity"] and stock["debt_to_equity"] > 100 and stock["ROE"] and stock["ROE"] < 0.05:
+        flags.append("High debt with low returns")
+
+    return flags
+
 def fetch_and_cache_all():
     print("Fetching stock data in background...")
     conn = sqlite3.connect("stocks.db")
@@ -131,6 +151,7 @@ def fetch_and_cache_all():
         stock = get_stock_data(symbol)
         if stock and stock["name"]:
             stock["score"] = score_stock(stock)
+            stock["value_trap_flags"] = check_value_trap(stock)
             c.execute("INSERT OR REPLACE INTO stocks VALUES (?, ?)",
                       (symbol, json.dumps(stock)))
             conn.commit()
@@ -208,6 +229,38 @@ def get_ranked_stocks():
     results = [json.loads(row[0]) for row in rows]
     ranked = sorted(results, key=lambda x: x["score"], reverse=True)
     return jsonify(ranked[:20])
+
+@app.route('/api/stock/<symbol>')
+def get_stock_detail(symbol):
+    try:
+        ticker = yf.Ticker(symbol)
+        info = ticker.info
+
+        def safe_float(val):
+            try:
+                return round(float(val), 2)
+            except:
+                return None
+
+        return jsonify({
+            "symbol": symbol,
+            "name": info.get("longName"),
+            "price": safe_float(info.get("currentPrice")),
+            "PE_ratio": safe_float(info.get("trailingPE")),
+            "PB_ratio": safe_float(info.get("priceToBook")),
+            "dividend_yield": safe_float(info.get("dividendYield")),
+            "ROE": safe_float(info.get("returnOnEquity")),
+            "debt_to_equity": safe_float(info.get("debtToEquity")),
+            "market_cap": safe_float(info.get("marketCap")),
+            "sector": info.get("sector"),
+            "industry": info.get("industry"),
+            "description": info.get("longBusinessSummary"),
+            "website": info.get("website"),
+            "employees": info.get("fullTimeEmployees"),
+            "country": info.get("country"),
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 init_db()
 scheduler = BackgroundScheduler()

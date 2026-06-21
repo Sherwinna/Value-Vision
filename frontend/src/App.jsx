@@ -1,3 +1,4 @@
+import StockDetailPage from "./pages/StockDetailPage"
 import { useState, useEffect } from "react"
 import { BrowserRouter, Routes, Route } from "react-router-dom"
 import { AuthProvider } from "./context/AuthContext"
@@ -12,7 +13,7 @@ function StockTable() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    fetch("https://value-vision-backend.onrender.com/api/stocks")
+    fetch("http://127.0.0.1:5000/api/stocks")
       .then(res => res.json())
       .then(data => {
         setStocks(data)
@@ -26,6 +27,9 @@ function StockTable() {
     <div>
       <h1>Value Vision</h1>
       <h2>Top Ranked Stocks</h2>
+      <p style={{ fontSize: "13px", color: "gray", marginBottom: "8px" }}>
+  ⚠️ = Potential value trap — hover over the warning for details
+    </p>
       <table border="1">
         <thead>
           <tr>
@@ -45,7 +49,21 @@ function StockTable() {
             <tr key={stock.symbol}>
               <td>{index + 1}</td>
               <td>{stock.symbol}</td>
-              <td>{stock.name}</td>
+              <td>
+                <a href={`/stock/${stock.symbol}`} style={{ textDecoration: "none", color: "#6200ea" }}>
+                  {stock.name}
+                </a>
+                {stock.value_trap_flags && stock.value_trap_flags.length > 0 && (
+                  <span title={stock.value_trap_flags.join(", ")} style={{
+                    marginLeft: "8px",
+                    color: "orange",
+                    cursor: "help",
+                    fontSize: "14px"
+                  }}>
+                    ⚠️
+                  </span>
+                )}
+              </td>
               <td>{stock.PE_ratio ?? "N/A"}</td>
               <td>{stock.PB_ratio ?? "N/A"}</td>
               <td>{stock.ROE ?? "N/A"}</td>
@@ -71,6 +89,7 @@ function App() {
           <Route path="/watchlist" element={<WatchlistPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
+          <Route path="/stock/:symbol" element={<StockDetailPage />} />
         </Routes>
       </AuthProvider>
     </BrowserRouter>
