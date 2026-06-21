@@ -36,7 +36,7 @@ export default function StockDetailPage() {
   const [error, setError] = useState(null)
 
   useEffect(() => {
-    fetch(`http://127.0.0.1:5000/api/stock/${symbol}`)
+    fetch(`https://value-vision-backend.onrender.com/api/stock/${symbol}`)
       .then(res => res.json())
       .then(data => {
         setStock(data)
