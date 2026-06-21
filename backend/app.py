@@ -100,16 +100,27 @@ def get_stock_data(symbol):
 
 def score_stock(stock):
     score = 0
+
+    # P/E ratio — lower is better, max 20 points
     if stock["PE_ratio"] and 0 < stock["PE_ratio"] < 20:
         score += (20 - stock["PE_ratio"])
+
+    # P/B ratio — lower is better, max 3 points
     if stock["PB_ratio"] and 0 < stock["PB_ratio"] < 3:
         score += (3 - stock["PB_ratio"])
-    if stock["dividend_yield"] and stock["dividend_yield"] > 0:
+
+    # Dividend yield — yfinance returns as decimal, cap at 10% to avoid outliers
+    if stock["dividend_yield"] and 0 < stock["dividend_yield"] < 0.10:
         score += stock["dividend_yield"] * 100
-    if stock["ROE"] and stock["ROE"] > 0:
+
+    # ROE — yfinance returns as decimal, cap at 50% to avoid outliers
+    if stock["ROE"] and 0 < stock["ROE"] < 0.50:
         score += stock["ROE"] * 100
+
+    # Debt to equity — lower is better, max 2 points
     if stock["debt_to_equity"] and 0 < stock["debt_to_equity"] < 2:
         score += (2 - stock["debt_to_equity"])
+
     return round(score, 2)
 
 def fetch_and_cache_all():
