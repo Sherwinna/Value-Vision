@@ -36,7 +36,7 @@ export default function StockDetailPage() {
   const [error, setError] = useState(null)
 
   useEffect(() => {
-    fetch(`${import.meta.env.VITE_API_URL}/api/stocks`)
+    fetch(`${import.meta.env.VITE_API_URL}/api/stock/${symbol}`)
       .then(res => res.json())
       .then(data => {
         setStock(data)
