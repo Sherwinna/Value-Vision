@@ -1,3 +1,5 @@
+import { useAuth } from "./context/AuthContext"
+import { fetchWithAuth } from "./api"
 import StockDetailPage from "./pages/StockDetailPage"
 import { useState, useEffect } from "react"
 import { BrowserRouter, Routes, Route } from "react-router-dom"
@@ -11,6 +13,13 @@ import LearnPage from "./pages/LearnPage"
 function StockTable() {
   const [stocks, setStocks] = useState([])
   const [loading, setLoading] = useState(true)
+  const { user } = useAuth()
+
+function addToWatchlist(symbol) {
+  fetchWithAuth(`/api/watchlist/${symbol}`, { method: "POST" })
+    .then(() => alert(`${symbol} added to watchlist!`))
+    .catch(err => alert(err.message))
+}
 
   useEffect(() => {
     fetch(`${import.meta.env.VITE_API_URL}/api/stocks`)
@@ -42,6 +51,7 @@ function StockTable() {
             <th>Div Yield</th>
             <th>Debt/Equity</th>
             <th>Score</th>
+            <th>Watchlist</th>
           </tr>
         </thead>
         <tbody>
@@ -70,6 +80,14 @@ function StockTable() {
               <td>{stock.dividend_yield ?? "N/A"}</td>
               <td>{stock.debt_to_equity ?? "N/A"}</td>
               <td>{stock.score}</td>
+              <td>
+        {user && (
+          <button onClick={() => addToWatchlist(stock.symbol)}
+            style={{ cursor: "pointer" }}>
+            + Watch
+          </button>
+        )}
+      </td>
             </tr>
           ))}
         </tbody>

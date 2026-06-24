@@ -40,6 +40,13 @@ def init_db():
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )''')
     conn.commit()
+    c.execute('''CREATE TABLE IF NOT EXISTS watchlist (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    symbol TEXT NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id),
+    UNIQUE(user_id, symbol)
+    )''')
     conn.close()
 
 def hash_password(password):
@@ -159,6 +166,38 @@ def fetch_and_cache_all():
     conn.close()
     print("Done fetching all stocks!")
 
+def token_required(f):
+    from functools import wraps
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        token = None
+        if 'Authorization' in request.headers:
+            auth_header = request.headers['Authorization']
+            if auth_header.startswith('Bearer '):
+                token = auth_header.split(' ')[1]
+        
+        if not token:
+            return jsonify({'error': 'Token is missing'}), 401
+        
+        try:
+            data = jwt.decode(token, app.config['SECRET_KEY'], algorithms=['HS256'])
+            conn = sqlite3.connect('stocks.db')
+            c = conn.cursor()
+            c.execute('SELECT * FROM users WHERE id = ?', (data['user_id'],))
+            current_user = c.fetchone()
+            conn.close()
+            if not current_user:
+                return jsonify({'error': 'User not found'}), 401
+            current_user = {
+                'id': current_user[0],
+                'username': current_user[1]
+            }
+        except Exception as e:
+            return jsonify({'error': 'Token is invalid'}), 401
+        
+        return f(current_user, *args, **kwargs)
+    return decorated
+
 @app.route('/api/register', methods=['POST'])
 def register():
     data = request.get_json()
@@ -261,6 +300,52 @@ def get_stock_detail(symbol):
         })
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+@app.route('/api/watchlist', methods=['GET'])
+@token_required
+def get_watchlist(current_user):
+    conn = sqlite3.connect("stocks.db")
+    c = conn.cursor()
+    c.execute("SELECT symbol FROM watchlist WHERE user_id = ?", (current_user['id'],))
+    symbols = [row[0] for row in c.fetchall()]
+    conn.close()
+
+    results = []
+    for symbol in symbols:
+        c2 = sqlite3.connect("stocks.db")
+        cur = c2.cursor()
+        cur.execute("SELECT data FROM stocks WHERE symbol = ?", (symbol,))
+        row = cur.fetchone()
+        c2.close()
+        if row:
+            results.append(json.loads(row[0]))
+
+    return jsonify(results)
+
+@app.route('/api/watchlist/<symbol>', methods=['POST'])
+@token_required
+def add_to_watchlist(current_user, symbol):
+    try:
+        conn = sqlite3.connect("stocks.db")
+        c = conn.cursor()
+        c.execute("INSERT OR IGNORE INTO watchlist (user_id, symbol) VALUES (?, ?)",
+                  (current_user['id'], symbol.upper()))
+        conn.commit()
+        conn.close()
+        return jsonify({"message": f"{symbol} added to watchlist"})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/watchlist/<symbol>', methods=['DELETE'])
+@token_required
+def remove_from_watchlist(current_user, symbol):
+    conn = sqlite3.connect("stocks.db")
+    c = conn.cursor()
+    c.execute("DELETE FROM watchlist WHERE user_id = ? AND symbol = ?",
+              (current_user['id'], symbol.upper()))
+    conn.commit()
+    conn.close()
+    return jsonify({"message": f"{symbol} removed from watchlist"})
 
 init_db()
 scheduler = BackgroundScheduler()

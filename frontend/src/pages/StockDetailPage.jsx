@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react"
 import { useParams, useNavigate } from "react-router-dom"
+import { useAuth } from "../context/AuthContext"
+import { fetchWithAuth } from "../api"
 
 function getMetricExplanation(metric, value) {
   if (value === null || value === undefined) return "Data not available."
@@ -34,6 +36,20 @@ export default function StockDetailPage() {
   const [stock, setStock] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const { user } = useAuth()
+const [inWatchlist, setInWatchlist] = useState(false)
+
+function toggleWatchlist() {
+  if (inWatchlist) {
+    fetchWithAuth(`/api/watchlist/${symbol}`, { method: "DELETE" })
+      .then(() => setInWatchlist(false))
+      .catch(err => alert(err.message))
+  } else {
+    fetchWithAuth(`/api/watchlist/${symbol}`, { method: "POST" })
+      .then(() => setInWatchlist(true))
+      .catch(err => alert(err.message))
+  }
+}
 
   useEffect(() => {
     fetch(`${import.meta.env.VITE_API_URL}/api/stock/${symbol}`)
@@ -68,6 +84,19 @@ export default function StockDetailPage() {
       <h1>{stock.name} ({stock.symbol})</h1>
       <p style={{ color: "gray" }}>{stock.sector} · {stock.industry}</p>
       <h2 style={{ fontSize: "32px" }}>${stock.price}</h2>
+    {user && (
+  <button onClick={toggleWatchlist} style={{
+    marginTop: "10px",
+    padding: "8px 16px",
+    background: inWatchlist ? "red" : "#6200ea",
+    color: "white",
+    border: "none",
+    borderRadius: "6px",
+    cursor: "pointer"
+  }}>
+    {inWatchlist ? "− Remove from Watchlist" : "+ Add to Watchlist"}
+  </button>
+)}
 
       <hr />
 
