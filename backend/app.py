@@ -347,6 +347,21 @@ def remove_from_watchlist(current_user, symbol):
     conn.close()
     return jsonify({"message": f"{symbol} removed from watchlist"})
 
+@app.route('/api/stock/<symbol>/history')
+def get_stock_history(symbol):
+    try:
+        ticker = yf.Ticker(symbol)
+        hist = ticker.history(period="3mo")
+        data = []
+        for date, row in hist.iterrows():
+            data.append({
+                "date": date.strftime("%Y-%m-%d"),
+                "price": round(float(row["Close"]), 2)
+            })
+        return jsonify(data)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 init_db()
 scheduler = BackgroundScheduler()
 scheduler.add_job(fetch_and_cache_all, 'interval', hours=24)

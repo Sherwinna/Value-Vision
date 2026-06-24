@@ -2,6 +2,7 @@ import { useEffect, useState } from "react"
 import { useParams, useNavigate } from "react-router-dom"
 import { useAuth } from "../context/AuthContext"
 import { fetchWithAuth } from "../api"
+import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine } from "recharts"
 
 function getMetricExplanation(metric, value) {
   if (value === null || value === undefined) return "Data not available."
@@ -38,6 +39,7 @@ export default function StockDetailPage() {
   const [error, setError] = useState(null)
   const { user } = useAuth()
 const [inWatchlist, setInWatchlist] = useState(false)
+const [history, setHistory] = useState([])
 
 function toggleWatchlist() {
   if (inWatchlist) {
@@ -63,6 +65,13 @@ function toggleWatchlist() {
         setLoading(false)
       })
   }, [symbol])
+
+  useEffect(() => {
+  fetch(`${import.meta.env.VITE_API_URL}/api/stock/${symbol}/history`)
+    .then(res => res.json())
+    .then(data => setHistory(data))
+    .catch(() => {})
+}, [symbol])
 
   if (loading) return <p>Loading...</p>
   if (error) return <p>{error}</p>
@@ -99,6 +108,25 @@ function toggleWatchlist() {
 )}
 
       <hr />
+
+      <h3>90-Day Price Chart</h3>
+{history.length > 0 ? (
+  <div style={{ marginBottom: "20px" }}>
+    <ResponsiveContainer width="100%" height={250}>
+      <LineChart data={history}>
+        <XAxis dataKey="date" tick={{ fontSize: 10 }} interval={14} />
+        <YAxis domain={["auto", "auto"]} tick={{ fontSize: 10 }} />
+        <Tooltip />
+        <Line type="monotone" dataKey="price" stroke="#6200ea" dot={false} strokeWidth={2} />
+      </LineChart>
+    </ResponsiveContainer>
+    <p style={{ fontSize: "12px", color: "gray", marginTop: "4px" }}>
+      Use this chart to observe recent price trends. A rising price may indicate growing investor confidence, while a falling price may signal concerns — always check the metrics below before deciding.
+    </p>
+  </div>
+) : (
+  <p>No price history available.</p>
+)}
 
       <h3>Financial Metrics</h3>
       {metrics.map(m => (
