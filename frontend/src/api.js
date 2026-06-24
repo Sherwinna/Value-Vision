@@ -1,4 +1,4 @@
-const API =  "https://value-vision-backend.onrender.com"
+const API = import.meta.env.VITE_API_URL
 
 export async function fetchWithAuth(url, options = {}) {
   const token = localStorage.getItem("token")

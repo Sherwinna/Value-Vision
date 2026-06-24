@@ -36,7 +36,7 @@ export default function StockDetailPage() {
   const [error, setError] = useState(null)
 
   useEffect(() => {
-    fetch(`https://value-vision-backend.onrender.com/api/stock/${symbol}`)
+    fetch(`${import.meta.env.VITE_API_URL}/api/stocks`)
       .then(res => res.json())
       .then(data => {
         setStock(data)
