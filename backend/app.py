@@ -101,6 +101,7 @@ def get_stock_data(symbol):
             "dividend_yield": safe_float(info.get("dividendYield")),
             "ROE": safe_float(info.get("returnOnEquity")),
             "debt_to_equity": safe_float(info.get("debtToEquity")),
+            "sector": info.get("sector"),
         }
     except:
         return None

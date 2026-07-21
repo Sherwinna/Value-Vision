@@ -14,6 +14,7 @@ function StockTable() {
   const [stocks, setStocks] = useState([])
   const [loading, setLoading] = useState(true)
   const { user } = useAuth()
+  const [selectedSector, setSelectedSector] = useState("All")
 
 function addToWatchlist(symbol) {
   fetchWithAuth(`/api/watchlist/${symbol}`, { method: "POST" })
@@ -31,6 +32,8 @@ function addToWatchlist(symbol) {
   }, [])
 
   if (loading) return <p>Loading stocks...</p>
+  const sectors = ["All", ...new Set(stocks.map(s => s.sector).filter(Boolean))]
+  const filteredStocks = selectedSector === "All" ? stocks : stocks.filter(s => s.sector === selectedSector)
 
   return (
     <div>
@@ -39,6 +42,18 @@ function addToWatchlist(symbol) {
       <p style={{ fontSize: "13px", color: "gray", marginBottom: "8px" }}>
   ⚠️ = Potential value trap — hover over the warning for details
     </p>
+    <div style={{ marginBottom: "12px" }}>
+  <label style={{ fontSize: "13px", marginRight: "8px" }}>Filter by sector:</label>
+  <select 
+    value={selectedSector} 
+    onChange={e => setSelectedSector(e.target.value)}
+    style={{ fontSize: "13px", padding: "4px 8px", borderRadius: "4px" }}
+  >
+    {sectors.map(s => (
+      <option key={s} value={s}>{s}</option>
+    ))}
+  </select>
+</div>
       <table border="1">
         <thead>
           <tr>
@@ -55,7 +70,7 @@ function addToWatchlist(symbol) {
           </tr>
         </thead>
         <tbody>
-          {stocks.map((stock, index) => (
+          {filteredStocks.map((stock, index) => (
             <tr key={stock.symbol}>
               <td>{index + 1}</td>
               <td>{stock.symbol}</td>
