@@ -21,29 +21,41 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="form-page">
-      <form onSubmit={handleSubmit} className="auth-form">
-        <h2>Sign In</h2>
-        {error && <p className="form-error">{error}</p>}
-        <input
-          type="text"
-          placeholder="Username"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-          required
-        />
-        <input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-        />
-        <button type="submit">Sign In</button>
-        <p className="form-link">
-          No account? <Link to="/register">Register</Link>
+    <div style={{ minHeight: "100vh", background: "#f0fdf4", display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <div style={{ background: "#fff", borderRadius: "12px", border: "1px solid #e5e7eb", padding: "40px", width: "100%", maxWidth: "380px", boxShadow: "0 1px 3px rgba(0,0,0,0.07)" }}>
+        <h2 style={{ fontSize: "22px", fontWeight: "600", color: "#111827", marginBottom: "6px", textAlign: "center" }}>Sign In</h2>
+        <p style={{ fontSize: "13px", color: "#9ca3af", textAlign: "center", marginBottom: "24px" }}>Welcome back to Value Vision</p>
+        {error && <p style={{ color: "#dc2626", fontSize: "13px", background: "#fef2f2", padding: "10px 12px", borderRadius: "6px", marginBottom: "16px" }}>{error}</p>}
+        <div style={{ marginBottom: "14px" }}>
+          <input
+            type="text"
+            placeholder="Username"
+            value={username}
+            onChange={e => setUsername(e.target.value)}
+            required
+            style={{ width: "100%", padding: "10px 12px", border: "1px solid #d1d5db", borderRadius: "8px", fontSize: "14px", outline: "none", boxSizing: "border-box" }}
+          />
+        </div>
+        <div style={{ marginBottom: "20px" }}>
+          <input
+            type="password"
+            placeholder="Password"
+            value={password}
+            onChange={e => setPassword(e.target.value)}
+            required
+            style={{ width: "100%", padding: "10px 12px", border: "1px solid #d1d5db", borderRadius: "8px", fontSize: "14px", outline: "none", boxSizing: "border-box" }}
+          />
+        </div>
+        <button
+          onClick={handleSubmit}
+          style={{ width: "100%", padding: "10px", background: "#15803d", color: "#fff", border: "none", borderRadius: "8px", fontSize: "14px", fontWeight: "500", cursor: "pointer" }}
+        >
+          Sign In
+        </button>
+        <p style={{ textAlign: "center", fontSize: "13px", color: "#6b7280", marginTop: "16px" }}>
+          No account? <Link to="/register" style={{ color: "#15803d", textDecoration: "none" }}>Register</Link>
         </p>
-      </form>
+      </div>
     </div>
   )
 }

@@ -15,28 +15,28 @@ export default function Navbar() {
   }
 
   return (
-    <nav className="navbar">
-      <Link to="/" className="nav-brand">Value Vision</Link>
-      <div className="nav-links">
-        <Link to="/learn" className="nav-link">Learn</Link>
-        <Link to="/watchlist" className="nav-link">Watchlist</Link>
+    <nav style={{ background: "#fff", borderBottom: "1px solid #e5e7eb", padding: "0 24px", display: "flex", alignItems: "center", justifyContent: "space-between", height: "56px", position: "sticky", top: 0, zIndex: 100, boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
+      <Link to="/" style={{ fontSize: "16px", fontWeight: "700", color: "#15803d", textDecoration: "none" }}>Value Vision</Link>
+      <div style={{ display: "flex", alignItems: "center", gap: "20px" }}>
+        <Link to="/learn" style={{ fontSize: "13px", color: "#374151", textDecoration: "none", fontWeight: "500" }}>Learn</Link>
+        <Link to="/watchlist" style={{ fontSize: "13px", color: "#374151", textDecoration: "none", fontWeight: "500" }}>Watchlist</Link>
         <input
-          className="nav-search"
           type="text"
           placeholder="Search ticker..."
           value={ticker}
           onChange={e => setTicker(e.target.value)}
           onKeyDown={handleSearch}
+          style={{ fontSize: "13px", border: "1px solid #d1d5db", borderRadius: "6px", padding: "6px 12px", outline: "none", width: "160px", color: "#374151" }}
         />
         {user ? (
           <>
-            <span className="nav-user">{user.username}</span>
-            <button onClick={logout} className="nav-btn">Logout</button>
+            <span style={{ fontSize: "13px", color: "#374151", fontWeight: "500" }}>{user.username}</span>
+            <button onClick={logout} style={{ fontSize: "13px", color: "#15803d", border: "1px solid #86efac", borderRadius: "6px", padding: "5px 12px", background: "transparent", cursor: "pointer", fontWeight: "500" }}>Logout</button>
           </>
         ) : (
           <>
-            <Link to="/login" className="nav-link">Sign In</Link>
-            <Link to="/register" className="nav-link">Register</Link>
+            <Link to="/login" style={{ fontSize: "13px", color: "#374151", textDecoration: "none", fontWeight: "500" }}>Sign In</Link>
+            <Link to="/register" style={{ fontSize: "13px", background: "#15803d", color: "#fff", textDecoration: "none", padding: "6px 14px", borderRadius: "6px", fontWeight: "500" }}>Register</Link>
           </>
         )}
       </div>

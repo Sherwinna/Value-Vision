@@ -1,6 +1,7 @@
 export default function LearnPage() {
   return (
-    <div className="learn-page">
+      
+    <div className="learn-page" style={{ background: "#f0fdf4", minHeight: "100vh" }}>
       <section className="learn-section">
         <h1>What is Value Investing?</h1>
         <p>
