@@ -313,13 +313,22 @@ def get_watchlist(current_user):
 
     results = []
     for symbol in symbols:
-        c2 = sqlite3.connect("stocks.db")
-        cur = c2.cursor()
+        # First try to get from cache
+        conn2 = sqlite3.connect("stocks.db")
+        cur = conn2.cursor()
         cur.execute("SELECT data FROM stocks WHERE symbol = ?", (symbol,))
         row = cur.fetchone()
-        c2.close()
+        conn2.close()
+
         if row:
             results.append(json.loads(row[0]))
+        else:
+            # Fall back to fetching directly from yfinance
+            stock = get_stock_data(symbol)
+            if stock and stock["name"]:
+                stock["score"] = score_stock(stock)
+                stock["value_trap_flags"] = check_value_trap(stock)
+                results.append(stock)
 
     return jsonify(results)
 
