@@ -372,5 +372,9 @@ scheduler.start()
 import threading
 threading.Thread(target=fetch_and_cache_all).start()
 
+@app.route('/health')
+def health():
+    return jsonify({"status": "ok"})
+
 if __name__ == '__main__':
     app.run(debug=True, use_reloader=False)
